@@ -1,0 +1,66 @@
+[gd_scene format=3 uid="uid://broom00001"]
+
+[ext_resource type="Script" uid="uid://b8g0wfnbfc5yi" path="res://scripts/room.gd" id="1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_h"]
+size = Vector2(1100, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_v"]
+size = Vector2(20, 600)
+
+[node name="Room" type="Node2D" unique_id=691461346]
+script = ExtResource("1")
+
+[node name="Floor" type="ColorRect" parent="." unique_id=1678094453]
+offset_right = 1100.0
+offset_bottom = 600.0
+color = Color(0.12, 0.12, 0.17, 1)
+
+[node name="Walls" type="StaticBody2D" parent="." unique_id=126541457]
+collision_mask = 0
+
+[node name="WallTop" type="ColorRect" parent="Walls" unique_id=55886949]
+offset_right = 1100.0
+offset_bottom = 20.0
+color = Color(0.3, 0.3, 0.4, 1)
+
+[node name="WallTopCol" type="CollisionShape2D" parent="Walls" unique_id=1506066934]
+position = Vector2(550, 10)
+shape = SubResource("RectangleShape2D_wall_h")
+
+[node name="WallBottom" type="ColorRect" parent="Walls" unique_id=2021205615]
+offset_top = 580.0
+offset_right = 1100.0
+offset_bottom = 600.0
+color = Color(0.3, 0.3, 0.4, 1)
+
+[node name="WallBottomCol" type="CollisionShape2D" parent="Walls" unique_id=1999710832]
+position = Vector2(550, 590)
+shape = SubResource("RectangleShape2D_wall_h")
+
+[node name="WallLeft" type="ColorRect" parent="Walls" unique_id=2031567718]
+offset_right = 20.0
+offset_bottom = 600.0
+color = Color(0.3, 0.3, 0.4, 1)
+
+[node name="WallLeftCol" type="CollisionShape2D" parent="Walls" unique_id=1209813237]
+position = Vector2(10, 300)
+shape = SubResource("RectangleShape2D_wall_v")
+
+[node name="WallRight" type="ColorRect" parent="Walls" unique_id=31720834]
+offset_left = 1080.0
+offset_right = 1100.0
+offset_bottom = 600.0
+color = Color(0.3, 0.3, 0.4, 1)
+
+[node name="WallRightCol" type="CollisionShape2D" parent="Walls" unique_id=5786609]
+position = Vector2(1090, 300)
+shape = SubResource("RectangleShape2D_wall_v")
+
+[node name="ExitDoor" type="ColorRect" parent="." unique_id=1773564073]
+offset_left = 500.0
+offset_right = 600.0
+offset_bottom = 20.0
+color = Color(0.4, 0.2, 0.2, 1)
+
+[node name="Enemies" type="Node" parent="." unique_id=489905522]
