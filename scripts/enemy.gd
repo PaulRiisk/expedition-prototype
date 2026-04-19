@@ -20,7 +20,7 @@ enum EnemyType { MELEE, RANGED }
 @export var shoot_interval: float = 1.5
 @export var projectile_speed: float = 300.0
 @export var ranged_keep_distance: float = 350.0
-@export var fan_shot_count: int = 3        ## 1 = einzeln, 3 = Fächer
+@export var fan_shot_count: int = 1        ## 1 = einzeln, 3 = Fächer
 @export var fan_spread_angle: float = 25.0 ## Winkel des Fächers in Grad
 
 ## ----- Boss-Charge (nur für Boss-Nahkämpfer) -----
