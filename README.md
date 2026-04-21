@@ -53,3 +53,16 @@ einstellen via:
 Für exportierte EXE: Export-Preset → Resources → Icon ebenfalls auf
 `res://icon.svg` setzen (Godot rendert es automatisch in die passenden
 Plattformgrößen).
+
+### Features
+- Spieler bewegt sich mit WASD
+- Schießt automatisch nur wenn stillstehend (Kern-Mechanik)
+- Zielt auf nächsten Gegner
+- Nahkämpfer (rot) und Fernkämpfer (orange)
+- Raumkette (10 Räume, letzter = Boss)
+- Raumwechsel nach oben durch offene Tür
+- HP-System mit 5 Leben und I-Frames nach Treffer
+- Game Feel: Hit-Flash, Screen-Shake, Blink bei I-Frames
+- Game Over + Win Screen + Neustart
+- Schwierigkeits-Skalierung über Räume
+
