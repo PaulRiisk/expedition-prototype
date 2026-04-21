@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" shape-rendering="crispEdges">
+	<!-- Hintergrund: dunkles Grid passend zum Spielboden -->
+	<rect width="128" height="128" fill="#181822"/>
+
+	<!-- Subtile Grid-Linien (alle 16px, ähnlich zum In-Game-Grid) -->
+	<g stroke="#2d2d3f" stroke-width="1">
+		<line x1="16" y1="0" x2="16" y2="128"/>
+		<line x1="32" y1="0" x2="32" y2="128"/>
+		<line x1="48" y1="0" x2="48" y2="128"/>
+		<line x1="64" y1="0" x2="64" y2="128"/>
+		<line x1="80" y1="0" x2="80" y2="128"/>
+		<line x1="96" y1="0" x2="96" y2="128"/>
+		<line x1="112" y1="0" x2="112" y2="128"/>
+		<line x1="0" y1="16" x2="128" y2="16"/>
+		<line x1="0" y1="32" x2="128" y2="32"/>
+		<line x1="0" y1="48" x2="128" y2="48"/>
+		<line x1="0" y1="64" x2="128" y2="64"/>
+		<line x1="0" y1="80" x2="128" y2="80"/>
+		<line x1="0" y1="96" x2="128" y2="96"/>
+		<line x1="0" y1="112" x2="128" y2="112"/>
+	</g>
+
+	<!-- Rahmen/Wände wie im Spiel -->
+	<rect x="0" y="0" width="128" height="8" fill="#40404a"/>
+	<rect x="0" y="120" width="128" height="8" fill="#40404a"/>
+	<rect x="0" y="0" width="8" height="128" fill="#40404a"/>
+	<rect x="120" y="0" width="8" height="128" fill="#40404a"/>
+
+	<!-- Gegner: roter Nahkämpfer (oben links) -->
+	<rect x="24" y="24" width="20" height="20" fill="#d93350"/>
+	<!-- Gegner: oranger Fernkämpfer (oben rechts) -->
+	<rect x="84" y="26" width="18" height="18" fill="#e68033"/>
+	<!-- Gegner: lila Fächerschütze (unten links) -->
+	<rect x="25" y="83" width="19" height="19" fill="#9a40b3"/>
+
+	<!-- Spieler-Projektil (hellblau) – unterwegs von Spieler zu Gegner oben rechts -->
+	<rect x="72" y="60" width="6" height="6" fill="#99e5ff"/>
+	<rect x="82" y="54" width="6" height="6" fill="#99e5ff"/>
+
+	<!-- Gegner-Projektil (lila) – unterwegs vom Fächerschützen -->
+	<rect x="52" y="80" width="5" height="5" fill="#c266f2"/>
+
+	<!-- Spieler: blauer Block in der Mitte (etwas größer, leicht heller als Gegner) -->
+	<rect x="54" y="58" width="20" height="20" fill="#66ccff"/>
+	<!-- Highlight oben links für Tiefe -->
+	<rect x="54" y="58" width="20" height="3" fill="#a3e0ff"/>
+	<rect x="54" y="58" width="3" height="20" fill="#a3e0ff"/>
+</svg>

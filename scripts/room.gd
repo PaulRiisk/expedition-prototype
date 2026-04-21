@@ -20,9 +20,10 @@ const WALL_THICKNESS: float = 16.0
 @export var num_ranged_enemies: int = 0
 @export var num_spread_enemies: int = 0   ## Neuer Typ: Lila Fächer-Schütze
 @export var is_boss_room: bool = false
+@export var is_boss2_room: bool = false   ## Boss 2 (Level 15)
 @export var is_start_room: bool = false   ## Startraum ohne Gegner
 @export var room_number: int = 1
-@export var total_rooms: int = 10
+@export var total_rooms: int = 15
 
 ## ----- Wellen-System -----
 @export var wave2_melee: int = 0
@@ -35,6 +36,8 @@ const WALL_THICKNESS: float = 16.0
 
 ## Mindestabstand zum Spieler beim Spawnen (in Pixeln)
 var min_player_distance: float = 150.0
+## Mindestabstand zu anderen bereits gespawnten Gegnern
+var min_enemy_distance: float = 56.0
 
 var enemies_alive: int = 0
 var cleared: bool = false
@@ -86,6 +89,7 @@ func _spawn_enemies() -> void:
 			return
 	
 	if is_boss_room:
+		# Boss 1 oder Boss 2 (abhängig vom Flag)
 		_spawn_enemy(Enemy.EnemyType.MELEE, _random_spawn_pos(), true)
 		enemies_alive += 1
 		return
@@ -104,14 +108,20 @@ func _spawn_enemies() -> void:
 	if enemies_alive == 0:
 		_clear_room()
 
-## Spawn auf Grid-Zellen, mit Abstand zum Spieler
+## Spawn auf Grid-Zellen, mit Abstand zum Spieler UND zu anderen Gegnern.
+## Verhindert, dass Gegner direkt aufeinander spawnen (sonst glitchen sie ineinander).
 func _random_spawn_pos() -> Vector2:
 	var local_player_pos: Vector2 = Vector2.ZERO
 	if player_ref != null:
 		local_player_pos = to_local(player_ref.global_position)
 	
-	for attempt in range(30):
-		# Spalte 2 bis 18, Reihe 2 bis 8 → sicher innerhalb der Wände
+	# Positionen bereits gespawnter Gegner in diesem Raum (lokal)
+	var existing_positions: Array[Vector2] = []
+	for child in enemies_container.get_children():
+		if child is Node2D:
+			existing_positions.append(child.position)
+	
+	for attempt in range(40):
 		var col: int = randi_range(3, GRID_COLS - 3)
 		var row: int = randi_range(3, GRID_ROWS - 3)
 		var pos := Vector2(
@@ -119,14 +129,27 @@ func _random_spawn_pos() -> Vector2:
 			row * CELL_SIZE + CELL_SIZE / 2.0
 		)
 		
+		# Abstand zum Spieler
 		if player_ref != null:
-			if pos.distance_to(local_player_pos) >= min_player_distance:
-				return pos
-		else:
-			return pos
+			if pos.distance_to(local_player_pos) < min_player_distance:
+				continue
+		
+		# Abstand zu anderen Gegnern
+		var too_close: bool = false
+		for other_pos in existing_positions:
+			if pos.distance_to(other_pos) < min_enemy_distance:
+				too_close = true
+				break
+		if too_close:
+			continue
+		
+		return pos
 	
-	# Fallback: Mitte des Raums
-	return Vector2(ROOM_WIDTH / 2.0, ROOM_HEIGHT / 2.0)
+	# Fallback: Mitte des Raums (leicht versetzt, damit nicht alle exakt auf einem Punkt landen)
+	return Vector2(
+		ROOM_WIDTH / 2.0 + randf_range(-40.0, 40.0),
+		ROOM_HEIGHT / 2.0 + randf_range(-40.0, 40.0)
+	)
 
 func _spawn_enemy(type: int, pos: Vector2, boss: bool) -> void:
 	var enemy := enemy_scene.instantiate()
@@ -137,9 +160,17 @@ func _spawn_enemy(type: int, pos: Vector2, boss: bool) -> void:
 	
 	if boss:
 		enemy.is_boss = true
-		enemy.max_health = 30
-		enemy.move_speed = 100.0
-		enemy.contact_damage = 2
+		if is_boss2_room:
+			# Boss 2: Boss 1 + Fächerschuss + mehr HP
+			enemy.is_boss2 = true
+			enemy.max_health = 45
+			enemy.move_speed = 100.0
+			enemy.contact_damage = 2
+		else:
+			# Boss 1
+			enemy.max_health = 30
+			enemy.move_speed = 100.0
+			enemy.contact_damage = 2
 	
 	enemy.died.connect(_on_enemy_died)
 	enemies_container.add_child(enemy)

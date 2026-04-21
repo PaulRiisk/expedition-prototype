@@ -1,98 +1,69 @@
-# Expedition 299 – Prototyp
+# Blockshooter – Patchnotes zum Prototypen
 
-Erster spielbarer Build zum Testen der Kernmechanik.
+## Geänderte Dateien
+Alle neuen Dateien einfach über deine bestehenden drüberkopieren:
 
-## Setup
+    scripts/game.gd        → überschrieben (Versuchszähler, 15 Räume, 2 Bosse)
+    scripts/enemy.gd       → überschrieben (Boss 2, Separation, lila Projektile, Death-Partikel)
+    scripts/room.gd        → überschrieben (Boss-2-Flag, Gegner-Abstand beim Spawn)
+    scripts/projectile.gd  → überschrieben (Farb-Override, Hit-Partikel)
+    scenes/game.tscn       → überschrieben (AttemptLabel hinzugefügt, Raumtext "1 / 15")
+    icon.svg               → NEU, gehört in den Projekt-Root
 
-1. Godot 4.3+ starten, "Importieren" → Ordner auswählen
-2. F5 drücken → läuft
+**Unverändert** (muss nicht überschrieben werden):
+    scripts/camera.gd, scripts/player.gd
+    scenes/enemy.tscn, scenes/player.tscn, scenes/projectile.tscn, scenes/room.tscn
 
-Kein Autoload, keine Plugins, nichts manuell zu konfigurieren.
+## Was ist passiert
 
-## Steuerung
+### 1. Versuchszähler (oben rechts)
+- Zeigt "Versuch: X" direkt unter "Raum Y / 15".
+- Zählt **bei ENTER im GAME-OVER-Screen** hoch (manuell bei Restart-Taste).
+- Wird **zurückgesetzt** bei: Sieg, Moduswechsel (TAB im Startraum).
+- Nur pro Session (keine Save-Datei). Technisch: gespeichert auf dem SceneTree
+  per `set_meta`, überlebt damit `reload_current_scene()`.
 
-| Taste | Aktion |
-|-------|--------|
-| WASD / Pfeiltasten | Bewegen |
-| Still stehen | Automatisches Schießen auf nächsten Gegner |
-| ENTER | Neustart nach Game Over |
+### 2. Lila Projektile für Fächerschützen (Gegner 3)
+- `projectile.setup()` akzeptiert einen optionalen Farbparameter.
+- Spread-Gegner (und Boss 2) schießen jetzt lila statt orange.
+- `player.gd` funktioniert unverändert, da der neue Parameter optional ist.
 
-## Ziel des Prototyps
+### 3. Endscreen mit Modus-Info
+- Sieg: `"Gewonnen nach X Versuch(en) im Modus A/B!"`
+- Tod: `"Du bist in Raum X gefallen (Versuch Y, Modus A/B)"`
 
-Die eine Frage beantworten:
-> **Macht es Spaß, stillzustehen um zu schießen und sich zu bewegen um auszuweichen?**
+### 4. 15 Räume, 2 Bosse
+- Boss 1: Raum 10 (wie bisher – Charge-Attacke).
+- Räume 11–14: neue Schwierigkeitskurve (steigende Wellen mit Fächerschützen).
+- Boss 2: Raum 15 = Boss 1 **plus** 5-Projektil-Fächerschuss alle ~1.6s, 45 HP,
+  dunkel-lila visuell unterscheidbar. Schießt während des Charges NICHT
+  (verhindert unfaire Situationen).
 
-## Was drin ist
+### 5. Anti-Glitch (Gegner ineinander)
+Zwei Mechanismen kombiniert:
+- **Separation-Steering im `_physics_process`**: jeder Gegner bekommt einen
+  sanften Abstoßungsvektor von Nachbarn im Radius 44px. Löst das Problem,
+  dass Gegner, die alle zum Spieler wollen, sich ineinander drücken.
+- **Spawn-Abstand**: neue Gegner spawnen nur, wenn sie ≥56px von jedem
+  bereits existierenden Gegner entfernt sind (plus ≥150px vom Spieler).
+  Verhindert initiales Überlappen.
 
-- ✅ Spieler bewegt sich mit WASD
-- ✅ Schießt automatisch nur wenn stillstehend (Kern-Mechanik)
-- ✅ Zielt auf nächsten Gegner
-- ✅ Nahkämpfer (rot) und Fernkämpfer (orange)
-- ✅ Raumkette (10 Räume, letzter = Boss)
-- ✅ Raumwechsel nach oben durch offene Tür
-- ✅ HP-System mit 5 Leben und I-Frames nach Treffer
-- ✅ Game Feel: Hit-Flash, Screen-Shake, Blink bei I-Frames
-- ✅ Game Over + Win Screen + Neustart
-- ✅ Schwierigkeits-Skalierung über Räume
+Während des Boss-Charges ist Separation deaktiviert, damit der Charge
+nicht verzerrt wird.
 
-## Was bewusst NICHT drin ist
+### 6. Death- und Hit-Partikel (Bonus)
+- Gegner-Tod: 9 kleine Quadrate in Gegnerfarbe fliegen auseinander,
+  faden aus (Boss: 14 Partikel, größer).
+- Projektil-Treffer: 5 kleine Quadrate in Projektilfarbe spritzen.
+- Alles mit `ColorRect` + `Tween`, keine externen Assets nötig.
 
-- ❌ Hub / Menüs
-- ❌ Progression, Items, Währung
-- ❌ In-Level Fähigkeiten (kommt in die Basisversion)
-- ❌ Sound / Musik
-- ❌ Hübsche Grafik – bewusst geometrische Formen
-- ❌ Controller-Support
+### 7. Desktop-Icon (`icon.svg`)
+Blockshooter-Motiv: blauer Spieler-Block in der Mitte, rote/orange/lila
+Gegnerblöcke in den Ecken, ein paar Projektile, passendes Grid. In Godot
+einstellen via:
 
-## Tuning
+    Project Settings → Application → Config → Icon → res://icon.svg
 
-Alle wichtigen Werte sind Export-Variablen, also im Godot-Inspector änderbar
-ohne Code anzufassen:
-
-**Spieler** (`player.gd` → Inspector bei `Player`-Node in der Player-Scene):
-- `move_speed` – Bewegungsgeschwindigkeit
-- `max_health` – Startleben
-- `shoot_interval` – Sekunden zwischen Schüssen
-- `projectile_speed` – Wie schnell Projektile fliegen
-- `invincibility_time` – I-Frame-Dauer nach Treffer
-
-**Gegner** (in `enemy.gd` verändert – betrifft alle Gegner):
-- `move_speed`, `max_health`, `contact_damage`
-- `shoot_interval` (nur Fernkämpfer)
-- `ranged_keep_distance` (Abstand den Fernkämpfer halten)
-
-**Raum-Progression** (in `game.gd`, Funktion `_load_room`):
-- Wie viele Gegner in welchem Raum spawnen
-- Wann Fernkämpfer dazu kommen
-- `total_rooms` – Gesamt-Raumzahl (Standard: 10)
-
-## Was ich empfehle zu testen
-
-1. **Erste Runde:** Spielen wie die Parameter sind. Einfach erfahren wie sich das anfühlt.
-2. **Zweite Runde:** `shoot_interval` mal auf 0.2 stellen (schnelleres Schießen) – fühlt sich besser an?
-3. **Dritte Runde:** `move_speed` auf 350 – zu schnell? Zu träge bei 200?
-4. **Freund dazu holen:** Blind spielen lassen ohne Erklärung. Verstehen sie die Mechanik intuitiv?
-
-Das Ziel ist das richtige "Feel" zu finden. Wenn es sich nach 3-4 Tuning-Runden
-immer noch nicht gut anfühlt, ist das ein wichtiges Signal – nicht zum Aufgeben,
-sondern zum Hinterfragen was fehlt (z.B. Dodge-Roll? Bessere Telegraphierung?).
-
-## Struktur
-
-```
-expedition-prototype/
-├── project.godot              # Projektkonfig + Input-Mappings
-├── scenes/
-│   ├── game.tscn             # Hauptszene
-│   ├── player.tscn
-│   ├── enemy.tscn
-│   ├── projectile.tscn
-│   └── room.tscn
-└── scripts/
-    ├── game.gd               # Raumkette, UI, Game Over
-    ├── player.gd             # Bewegung, Auto-Aim, Schießen, HP
-    ├── enemy.gd              # Nah- und Fernkämpfer
-    ├── projectile.gd         # Shared für Spieler + Gegner
-    ├── room.gd               # Einzelner Raum mit Gegnerspawn
-    └── camera.gd             # Screen-Shake
-```
+Für exportierte EXE: Export-Preset → Resources → Icon ebenfalls auf
+`res://icon.svg` setzen (Godot rendert es automatisch in die passenden
+Plattformgrößen).

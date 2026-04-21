@@ -2,7 +2,7 @@ extends CharacterBody2D
 class_name Enemy
 
 ## ================================================================
-## GEGNER – Nahkämpfer, Fernkämpfer, Fächer-Schütze, Boss
+## GEGNER – Nahkämpfer, Fernkämpfer, Fächer-Schütze, Boss 1, Boss 2
 ## ================================================================
 
 signal died(enemy: Enemy)
@@ -21,8 +21,12 @@ enum EnemyType { MELEE, RANGED, SPREAD }
 @export var projectile_speed: float = 350.0
 @export var ranged_keep_distance: float = 400.0
 
+## Farbe für Fächerschütze-Projektile (lila, passend zum Sprite)
+const SPREAD_PROJECTILE_COLOR: Color = Color(0.75, 0.4, 0.95)
+
 ## ----- Boss-Charge -----
 var is_boss: bool = false
+var is_boss2: bool = false   ## Boss 2 = Boss 1 + Fächerschuss + mehr HP
 var charge_cooldown: float = 2.0
 var charge_timer: float = 2.5	## Startet mit erstem Charge
 var charge_speed_multiplier: float = 9.0
@@ -31,10 +35,20 @@ var is_charging: bool = false
 var charge_time_left: float = 0.0
 var charge_direction: Vector2 = Vector2.ZERO
 
+## Boss-2 Fächerschuss
+var boss2_fan_cooldown: float = 1.6
+var boss2_fan_timer: float = 1.2
+
 ## ----- Spawn-Delay -----
 var spawn_delay: float = 0.0
 var spawn_delay_timer: float = 0.0
 var is_active: bool = false
+
+## ----- Separation / Anti-Glitch -----
+## Verhindert, dass Gegner ineinander stecken.
+## Wird nur bei aktiven, nicht-chargenden Gegnern angewendet.
+const SEPARATION_RADIUS: float = 44.0
+const SEPARATION_STRENGTH: float = 180.0
 
 ## ----- Interne Variablen -----
 var current_health: int
@@ -51,6 +65,9 @@ var projectile_scene: PackedScene = preload("res://scenes/projectile.tscn")
 ## HP-Balken Nodes (werden in _ready erstellt)
 var hp_bar_bg: ColorRect
 var hp_bar_fill: ColorRect
+
+## Farbe des Sprites (für Death-Partikel)
+var sprite_color: Color = Color.WHITE
 
 func _ready() -> void:
 	current_health = max_health
@@ -74,11 +91,19 @@ func _ready() -> void:
 			sprite.size = Vector2(30, 30)
 			sprite.position = Vector2(-15, -15)
 	
-	# Boss: größer, dunkler
-	if is_boss:
+	# Boss 1: größer, dunkelrot
+	if is_boss and not is_boss2:
 		sprite.color = Color(0.7, 0.1, 0.15)
 		sprite.size = Vector2(48, 48)
 		sprite.position = Vector2(-24, -24)
+	
+	# Boss 2: größer, dunkel-lila (visuell klar unterscheidbar)
+	if is_boss2:
+		sprite.color = Color(0.55, 0.15, 0.65)
+		sprite.size = Vector2(48, 48)
+		sprite.position = Vector2(-24, -24)
+	
+	sprite_color = sprite.color
 	
 	# HP-Balken erstellen
 	_create_hp_bar()
@@ -140,6 +165,8 @@ func _handle_timers(delta: float) -> void:
 		hit_flash_timer -= delta
 	if is_boss and not is_charging:
 		charge_timer -= delta
+	if is_boss2 and boss2_fan_timer > 0.0:
+		boss2_fan_timer -= delta
 
 func _handle_behavior(delta: float) -> void:
 	var to_player: Vector2 = player_ref.global_position - global_position
@@ -156,6 +183,11 @@ func _handle_behavior(delta: float) -> void:
 				_behavior_ranged(direction, distance, 1)
 			EnemyType.SPREAD:
 				_behavior_ranged(direction, distance, 3)
+	
+	# Separation-Steering: verhindert, dass Gegner ineinander glitchen.
+	# Während Boss-Charge überspringen, damit der Charge nicht verzerrt wird.
+	if not is_charging:
+		velocity += _compute_separation() * SEPARATION_STRENGTH
 	
 	move_and_slide()
 	_check_contact_damage()
@@ -190,6 +222,11 @@ func _behavior_boss(direction: Vector2, _distance: float, delta: float) -> void:
 		hit_flash_timer = 0.15
 	else:
 		velocity = direction * move_speed
+	
+	# Boss 2: zusätzlich regelmäßig Fächerschüsse (außer während Charge)
+	if is_boss2 and not is_charging and boss2_fan_timer <= 0.0:
+		_shoot_fan(5)
+		boss2_fan_timer = boss2_fan_cooldown
 
 ## Schießt 1 oder mehr Projektile als Fächer
 func _shoot_fan(count: int) -> void:
@@ -200,7 +237,8 @@ func _shoot_fan(count: int) -> void:
 	if count <= 1:
 		_fire_projectile(base_dir)
 	else:
-		var spread_angle: float = deg_to_rad(30.0)
+		# Weiterer Fächer bei >3 Projektilen für den Boss 2
+		var spread_angle: float = deg_to_rad(30.0) if count <= 3 else deg_to_rad(55.0)
 		var half_spread: float = spread_angle / 2.0
 		for i in range(count):
 			var t: float = float(i) / float(count - 1)
@@ -210,8 +248,35 @@ func _shoot_fan(count: int) -> void:
 func _fire_projectile(direction: Vector2) -> void:
 	var projectile := projectile_scene.instantiate()
 	projectile.global_position = global_position
-	projectile.setup(direction, projectile_speed, contact_damage, false)
+	# SPREAD-Gegner und Boss 2 verschießen lila Projektile
+	var use_purple: bool = (enemy_type == EnemyType.SPREAD) or is_boss2
+	var color_override: Variant = SPREAD_PROJECTILE_COLOR if use_purple else null
+	projectile.setup(direction, projectile_speed, contact_damage, false, color_override)
 	get_parent().add_child(projectile)
+
+## Berechnet einen Wegdrück-Vektor basierend auf nahen anderen Gegnern.
+## Verhindert Ineinander-Glitchen durch sanfte Abstoßung.
+func _compute_separation() -> Vector2:
+	var push: Vector2 = Vector2.ZERO
+	var enemies := get_tree().get_nodes_in_group("enemies")
+	for other in enemies:
+		if other == self:
+			continue
+		if not (other is Node2D):
+			continue
+		if other.has_method("is_dead") and other.is_dead():
+			continue
+		var diff: Vector2 = global_position - other.global_position
+		var dist: float = diff.length()
+		if dist <= 0.01:
+			# Exakt auf derselben Position → zufälligen Schubs geben
+			push += Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0))
+			continue
+		if dist < SEPARATION_RADIUS:
+			# Linearer Falloff: nahe = stärker, weit = schwächer
+			var strength: float = 1.0 - (dist / SEPARATION_RADIUS)
+			push += (diff / dist) * strength
+	return push
 
 func _check_contact_damage() -> void:
 	if contact_damage_timer > 0.0:
@@ -244,8 +309,35 @@ func _die() -> void:
 	if dead:
 		return
 	dead = true
+	_spawn_death_particles()
 	died.emit(self)
 	queue_free()
+
+## Kleine farbige Partikel-Explosion beim Tod
+func _spawn_death_particles() -> void:
+	var parent := get_parent()
+	if parent == null:
+		return
+	var count: int = 14 if is_boss else 9
+	var size: float = 6.0 if is_boss else 5.0
+	for i in range(count):
+		var p := ColorRect.new()
+		p.size = Vector2(size, size)
+		p.color = sprite_color
+		p.position = global_position - Vector2(size * 0.5, size * 0.5)
+		p.z_index = 20
+		parent.add_child(p)
+		
+		var angle: float = randf() * TAU
+		var dist: float = randf_range(22.0, 55.0) if is_boss else randf_range(14.0, 40.0)
+		var target: Vector2 = p.position + Vector2(cos(angle), sin(angle)) * dist
+		var duration: float = randf_range(0.35, 0.55)
+		
+		var tween := p.create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(p, "position", target, duration)
+		tween.tween_property(p, "modulate:a", 0.0, duration)
+		tween.chain().tween_callback(p.queue_free)
 
 func is_dead() -> bool:
 	return dead

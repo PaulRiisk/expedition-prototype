@@ -42,7 +42,17 @@ offset_right = 1260.0
 offset_bottom = 50.0
 theme_override_colors/font_color = Color(0.8, 0.8, 0.9, 1)
 theme_override_font_sizes/font_size = 20
-text = "Raum 1 / 10"
+text = "Raum 1 / 15"
+horizontal_alignment = 2
+
+[node name="AttemptLabel" type="Label" parent="UI" unique_id=516463220]
+offset_left = 1080.0
+offset_top = 45.0
+offset_right = 1260.0
+offset_bottom = 75.0
+theme_override_colors/font_color = Color(0.7, 0.75, 0.9, 1)
+theme_override_font_sizes/font_size = 16
+text = "Versuch: 1"
 horizontal_alignment = 2
 
 [node name="ControlLabel" type="Label" parent="UI" unique_id=1349288702]
