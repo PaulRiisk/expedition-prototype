@@ -6,6 +6,7 @@ class_name Room
 ## ================================================================
 
 signal room_cleared
+signal player_exited  ## Spieler ist durch die Tür oben gelaufen
 
 ## Grid-Konstanten
 const CELL_SIZE: float = 48.0
@@ -47,6 +48,8 @@ var player_ref: Node2D = null
 var enemy_scene: PackedScene = preload("res://scenes/enemy.tscn")
 
 @onready var exit_door: ColorRect = $ExitDoor
+@onready var door_collider: StaticBody2D = $DoorCollider
+@onready var exit_trigger: Area2D = $ExitTrigger
 @onready var enemies_container: Node = $Enemies
 @onready var grid_lines_node: Node2D = $GridLines
 
@@ -54,11 +57,13 @@ func _ready() -> void:
 	exit_door.modulate = Color(0.4, 0.2, 0.2)
 	_draw_grid()
 	
+	exit_trigger.body_entered.connect(_on_exit_trigger_body_entered)
+	
 	if is_start_room:
-		# Startraum: Tür sofort offen, keine Gegner
 		cleared = true
-		$Walls/WallTopCol.set_deferred("disabled", true)
 		exit_door.modulate = Color(0.3, 1.0, 0.4)
+		door_collider.set_deferred("process_mode", Node.PROCESS_MODE_DISABLED)
+		exit_trigger.set_deferred("monitoring", true)
 	else:
 		call_deferred("_spawn_enemies")
 
@@ -164,12 +169,12 @@ func _spawn_enemy(type: int, pos: Vector2, boss: bool) -> void:
 			# Boss 2: Boss 1 + Fächerschuss + mehr HP
 			enemy.is_boss2 = true
 			enemy.max_health = 45
-			enemy.move_speed = 100.0
+			enemy.move_speed = 115.0
 			enemy.contact_damage = 1
 		else:
 			# Boss 1
 			enemy.max_health = 30
-			enemy.move_speed = 110.0
+			enemy.move_speed = 125.0
 			enemy.contact_damage = 1
 	
 	enemy.died.connect(_on_enemy_died)
@@ -204,7 +209,17 @@ func _spawn_wave_2() -> void:
 
 func _clear_room() -> void:
 	cleared = true
-	$Walls/WallTopCol.set_deferred("disabled", true)
+	# Physische Tür-Kollision aufheben – Spieler kann jetzt durchlaufen
+	door_collider.set_deferred("process_mode", Node.PROCESS_MODE_DISABLED)
+	# Trigger aktivieren – löst Raumwechsel aus wenn Spieler durchläuft
+	exit_trigger.set_deferred("monitoring", true)
 	var tween := create_tween()
 	tween.tween_property(exit_door, "modulate", Color(0.3, 1.0, 0.4), 0.4)
 	room_cleared.emit()
+
+func _on_exit_trigger_body_entered(body: Node2D) -> void:
+	# Nur den Spieler durchlassen und nur, wenn der Raum wirklich cleared ist.
+	if not cleared:
+		return
+	if body == player_ref:
+		player_exited.emit()

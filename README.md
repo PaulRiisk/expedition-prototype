@@ -65,4 +65,3 @@ Plattformgrößen).
 - Game Feel: Hit-Flash, Screen-Shake, Blink bei I-Frames
 - Game Over + Win Screen + Neustart
 - Schwierigkeits-Skalierung über Räume
-

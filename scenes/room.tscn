@@ -2,11 +2,20 @@
 
 [ext_resource type="Script" uid="uid://b8g0wfnbfc5yi" path="res://scripts/room.gd" id="1"]
 
+[sub_resource type="RectangleShape2D" id="wall_top_side"]
+size = Vector2(432, 16)
+
 [sub_resource type="RectangleShape2D" id="wall_h"]
 size = Vector2(1008, 16)
 
 [sub_resource type="RectangleShape2D" id="wall_v"]
 size = Vector2(16, 528)
+
+[sub_resource type="RectangleShape2D" id="door_col_shape"]
+size = Vector2(144, 16)
+
+[sub_resource type="RectangleShape2D" id="exit_trigger"]
+size = Vector2(144, 32)
 
 [node name="Room" type="Node2D" unique_id=1955314699]
 script = ExtResource("1")
@@ -21,14 +30,24 @@ color = Color(0.1, 0.1, 0.15, 1)
 [node name="Walls" type="StaticBody2D" parent="." unique_id=478844997]
 collision_mask = 0
 
-[node name="WallTop" type="ColorRect" parent="Walls" unique_id=1887021180]
+[node name="WallTopLeft" type="ColorRect" parent="Walls" unique_id=1887021180]
+offset_right = 432.0
+offset_bottom = 16.0
+color = Color(0.25, 0.25, 0.35, 1)
+
+[node name="WallTopLeftCol" type="CollisionShape2D" parent="Walls" unique_id=722595044]
+position = Vector2(216, 8)
+shape = SubResource("wall_top_side")
+
+[node name="WallTopRight" type="ColorRect" parent="Walls" unique_id=1887021181]
+offset_left = 576.0
 offset_right = 1008.0
 offset_bottom = 16.0
 color = Color(0.25, 0.25, 0.35, 1)
 
-[node name="WallTopCol" type="CollisionShape2D" parent="Walls" unique_id=722595044]
-position = Vector2(504, 8)
-shape = SubResource("wall_h")
+[node name="WallTopRightCol" type="CollisionShape2D" parent="Walls" unique_id=722595045]
+position = Vector2(792, 8)
+shape = SubResource("wall_top_side")
 
 [node name="WallBottom" type="ColorRect" parent="Walls" unique_id=2113728682]
 offset_top = 512.0
@@ -64,5 +83,21 @@ offset_left = 432.0
 offset_right = 576.0
 offset_bottom = 16.0
 color = Color(0.4, 0.2, 0.2, 1)
+
+[node name="DoorCollider" type="StaticBody2D" parent="." unique_id=174632680]
+collision_mask = 0
+
+[node name="DoorColliderShape" type="CollisionShape2D" parent="DoorCollider" unique_id=174632681]
+position = Vector2(504, 8)
+shape = SubResource("door_col_shape")
+
+[node name="ExitTrigger" type="Area2D" parent="." unique_id=174632670]
+collision_layer = 0
+collision_mask = 2
+monitoring = false
+
+[node name="ExitTriggerCol" type="CollisionShape2D" parent="ExitTrigger" unique_id=174632671]
+position = Vector2(504, 0)
+shape = SubResource("exit_trigger")
 
 [node name="Enemies" type="Node" parent="." unique_id=346815663]

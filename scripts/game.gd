@@ -81,8 +81,8 @@ func _input(event: InputEvent) -> void:
 				_debug_jump_to(BOSS1_ROOM)
 			elif event.keycode == KEY_F2:
 				_debug_jump_to(BOSS2_ROOM)
-			#elif event.keycode == KEY_F3:
-			#	_debug_jump_to(14)
+			elif event.keycode == KEY_F3:
+				_debug_jump_to(14)
 
 func _debug_jump_to(room_num: int) -> void:
 	hint_label.text = ""
@@ -113,7 +113,7 @@ func _load_room(room_num: int) -> void:
 		room.num_melee_enemies = 0
 		room.num_ranged_enemies = 0
 		room.num_spread_enemies = 0
-		hint_label.text = "TAB = Steuerung wechseln | Nach oben gehen = Start" # | F1/F2 = Boss 1/2 (Debug)
+		hint_label.text = "TAB = Switch control mode | Move up = Start" # | F1/F2 = Boss 1/2 (Debug)
 		_update_control_label()
 	elif room_num == BOSS1_ROOM:
 		## ===== BOSS 1 =====
@@ -139,15 +139,12 @@ func _load_room(room_num: int) -> void:
 	
 	room.set_player(player)
 	room.room_cleared.connect(_on_room_cleared)
+	room.player_exited.connect(_on_player_exited)
 	room_container.add_child(room)
 	current_room = room
 	
 	player.position = Vector2(Room.ROOM_WIDTH / 2, Room.ROOM_HEIGHT - 60)
 	_update_room_label()
-	
-	# Startraum: direkt auf Spieler warten (kein room_cleared Signal nötig)
-	if room_num == 0:
-		_wait_for_player_to_exit()
 
 ## =========================================================
 ## SCHWIERIGKEITSKURVE – jetzt für 15 Räume (Boss 1 @ 10, Boss 2 @ 15)
@@ -211,24 +208,25 @@ func _on_room_cleared() -> void:
 	if current_room.is_boss_room:
 		# Nur nach Boss 2 ist das Spiel gewonnen. Boss 1 → nächster Raum.
 		if current_room_number == BOSS2_ROOM:
-			hint_label.text = "BOSS 2 BESIEGT!"
+			hint_label.text = "BOSS 2 DEFEATED!"
 			await get_tree().create_timer(0.8).timeout
 			_show_win_screen()
 		else:
-			hint_label.text = "Boss besiegt! Nach oben laufen für nächsten Raum."
-			_wait_for_player_to_exit()
+			hint_label.text = "Boss defeated! Move up to proceed to the next room."
 	else:
-		hint_label.text = "Raum geschafft! Nach oben laufen für nächsten Raum."
-		_wait_for_player_to_exit()
+		hint_label.text = "Room cleared! Move up to proceed to the next room."
 
-func _wait_for_player_to_exit() -> void:
-	while current_room != null and current_room.cleared and not game_ended:
-		await get_tree().process_frame
-		if game_ended or player == null or player.is_dead():
-			return
-		if player.position.y < 30:
-			_next_room()
-			return
+## Wird vom Tür-Trigger des aktuellen Raums ausgelöst (Area2D),
+## sobald der Spieler wirklich oben durchläuft.
+func _on_player_exited() -> void:
+	if game_ended:
+		return
+	if player == null or player.is_dead():
+		return
+	# Startraum: auch ohne room_cleared darf der Spieler raus (ist von
+	# Anfang an "cleared"). Sonstige Räume brauchen cleared=true, was der
+	# Trigger selbst schon absichert.
+	_next_room()
 
 func _next_room() -> void:
 	hint_label.text = ""
@@ -259,9 +257,9 @@ func _toggle_control_mode() -> void:
 func _update_control_label() -> void:
 	control_label.visible = true
 	if player.control_mode == Player.ControlMode.AUTO_AIM:
-		control_label.text = "Modus A: Stehen = Auto-Schießen | Bewegen = Ausweichen"
+		control_label.text = "Mode A: Stand still = auto-shoot | WASD = move | SPACE = dash"
 	else:
-		control_label.text = "Modus B: WASD + Maus zielen & schießen (Linksklick)"
+		control_label.text = "Mode B: Mouse to aim & shoot (left click) | WASD = move | SPACE = dash"
 
 ## --- UI ---
 func _on_health_changed(current: int, maximum: int) -> void:
@@ -280,10 +278,10 @@ func _update_room_label() -> void:
 	elif current_room_number == BOSS2_ROOM:
 		room_label.text = "BOSS 2"
 	else:
-		room_label.text = "Raum %d / %d" % [current_room_number, total_rooms]
+		room_label.text = "Room %d / %d" % [current_room_number, total_rooms]
 
 func _update_attempt_label() -> void:
-	attempt_label.text = "Versuch: %d" % attempt_number
+	attempt_label.text = "Attempt: %d" % attempt_number
 
 func _mode_letter() -> String:
 	if player != null and player.control_mode == Player.ControlMode.MOUSE_AIM:
@@ -296,7 +294,7 @@ func _on_player_died() -> void:
 	game_ended = true
 	end_title.text = "GAME OVER"
 	end_title.modulate = Color(1.0, 0.3, 0.3)
-	end_info.text = "Du bist in Raum %d gefallen (Versuch %d, Modus %s).\n\nENTER für Neustart" % [current_room_number, attempt_number, _mode_letter()]
+	end_info.text = "You died in room %d (attempt %d, mode %s).\n\nPress ENTER to restart." % [current_room_number, attempt_number, _mode_letter()]
 	end_screen.visible = true
 	camera.shake(16.0, 0.5)
 
@@ -304,9 +302,9 @@ func _show_win_screen() -> void:
 	if game_ended:
 		return
 	game_ended = true
-	end_title.text = "GEWONNEN!"
+	end_title.text = "WINNER!"
 	end_title.modulate = Color(0.4, 1.0, 0.5)
-	end_info.text = "Gewonnen nach %d Versuch%s im Modus %s!\n\nENTER für Neustart" % [
+	end_info.text = "You won after %d attempt%s in mode %s!\n\nPress ENTER to restart." % [
 		attempt_number,
 		"" if attempt_number == 1 else "en",
 		_mode_letter()
