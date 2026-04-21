@@ -1,18 +1,4 @@
-# Blockshooter – Patchnotes zum Prototypen
-
-## Geänderte Dateien
-Alle neuen Dateien einfach über deine bestehenden drüberkopieren:
-
-    scripts/game.gd        → überschrieben (Versuchszähler, 15 Räume, 2 Bosse)
-    scripts/enemy.gd       → überschrieben (Boss 2, Separation, lila Projektile, Death-Partikel)
-    scripts/room.gd        → überschrieben (Boss-2-Flag, Gegner-Abstand beim Spawn)
-    scripts/projectile.gd  → überschrieben (Farb-Override, Hit-Partikel)
-    scenes/game.tscn       → überschrieben (AttemptLabel hinzugefügt, Raumtext "1 / 15")
-    icon.svg               → NEU, gehört in den Projekt-Root
-
-**Unverändert** (muss nicht überschrieben werden):
-    scripts/camera.gd, scripts/player.gd
-    scenes/enemy.tscn, scenes/player.tscn, scenes/projectile.tscn, scenes/room.tscn
+# Blockshooter – Patchnotes zum Prototypen für Version 1.0
 
 ## Was ist passiert
 
@@ -62,7 +48,7 @@ Blockshooter-Motiv: blauer Spieler-Block in der Mitte, rote/orange/lila
 Gegnerblöcke in den Ecken, ein paar Projektile, passendes Grid. In Godot
 einstellen via:
 
-    Project Settings → Application → Config → Icon → res://icon.svg
+	Project Settings → Application → Config → Icon → res://icon.svg
 
 Für exportierte EXE: Export-Preset → Resources → Icon ebenfalls auf
 `res://icon.svg` setzen (Godot rendert es automatisch in die passenden
