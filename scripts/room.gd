@@ -165,12 +165,12 @@ func _spawn_enemy(type: int, pos: Vector2, boss: bool) -> void:
 			enemy.is_boss2 = true
 			enemy.max_health = 45
 			enemy.move_speed = 100.0
-			enemy.contact_damage = 2
+			enemy.contact_damage = 1
 		else:
 			# Boss 1
 			enemy.max_health = 30
-			enemy.move_speed = 100.0
-			enemy.contact_damage = 2
+			enemy.move_speed = 110.0
+			enemy.contact_damage = 1
 	
 	enemy.died.connect(_on_enemy_died)
 	enemies_container.add_child(enemy)

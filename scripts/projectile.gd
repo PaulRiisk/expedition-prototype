@@ -68,20 +68,23 @@ func _spawn_hit_particles() -> void:
 	if parent == null:
 		return
 	var particle_color: Color = modulate
+	var origin: Vector2 = global_position
 	for i in range(5):
 		var p := ColorRect.new()
 		p.size = Vector2(4, 4)
 		p.color = particle_color
-		p.position = global_position - Vector2(2, 2)
 		p.z_index = 20
 		parent.add_child(p)
+		# Wichtig: global_position statt position setzen, sonst entsteht ein
+		# Offset durch den ROOM_OFFSET des Parent-Containers.
+		p.global_position = origin - Vector2(2, 2)
 		
 		var angle: float = randf() * TAU
 		var dist: float = randf_range(10.0, 22.0)
-		var target: Vector2 = p.position + Vector2(cos(angle), sin(angle)) * dist
+		var target: Vector2 = p.global_position + Vector2(cos(angle), sin(angle)) * dist
 		
 		var tween := p.create_tween()
 		tween.set_parallel(true)
-		tween.tween_property(p, "position", target, 0.25)
+		tween.tween_property(p, "global_position", target, 0.25)
 		tween.tween_property(p, "modulate:a", 0.0, 0.25)
 		tween.chain().tween_callback(p.queue_free)

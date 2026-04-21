@@ -29,14 +29,14 @@ var is_boss: bool = false
 var is_boss2: bool = false   ## Boss 2 = Boss 1 + Fächerschuss + mehr HP
 var charge_cooldown: float = 2.0
 var charge_timer: float = 2.5	## Startet mit erstem Charge
-var charge_speed_multiplier: float = 9.0
-var charge_duration: float = 0.75
+var charge_speed_multiplier: float = 10.0
+var charge_duration: float = 0.53
 var is_charging: bool = false
 var charge_time_left: float = 0.0
 var charge_direction: Vector2 = Vector2.ZERO
 
 ## Boss-2 Fächerschuss
-var boss2_fan_cooldown: float = 1.6
+var boss2_fan_cooldown: float = 2
 var boss2_fan_timer: float = 1.2
 
 ## ----- Spawn-Delay -----
@@ -320,22 +320,25 @@ func _spawn_death_particles() -> void:
 		return
 	var count: int = 14 if is_boss else 9
 	var size: float = 6.0 if is_boss else 5.0
+	var origin: Vector2 = global_position
 	for i in range(count):
 		var p := ColorRect.new()
 		p.size = Vector2(size, size)
 		p.color = sprite_color
-		p.position = global_position - Vector2(size * 0.5, size * 0.5)
 		p.z_index = 20
 		parent.add_child(p)
+		# global_position statt position, damit der ROOM_OFFSET kein
+		# sichtbares Offset zwischen Tod und Partikeln erzeugt.
+		p.global_position = origin - Vector2(size * 0.5, size * 0.5)
 		
 		var angle: float = randf() * TAU
 		var dist: float = randf_range(22.0, 55.0) if is_boss else randf_range(14.0, 40.0)
-		var target: Vector2 = p.position + Vector2(cos(angle), sin(angle)) * dist
+		var target: Vector2 = p.global_position + Vector2(cos(angle), sin(angle)) * dist
 		var duration: float = randf_range(0.35, 0.55)
 		
 		var tween := p.create_tween()
 		tween.set_parallel(true)
-		tween.tween_property(p, "position", target, duration)
+		tween.tween_property(p, "global_position", target, duration)
 		tween.tween_property(p, "modulate:a", 0.0, duration)
 		tween.chain().tween_callback(p.queue_free)
 

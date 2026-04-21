@@ -2,3 +2,4 @@ res://scripts/enemy.gd
 res://scripts/game.gd
 res://scripts/projectile.gd
 res://scripts/room.gd
+res://scenes/game.tscn

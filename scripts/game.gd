@@ -75,6 +75,19 @@ func _input(event: InputEvent) -> void:
 		if event is InputEventKey and event.pressed and not event.echo:
 			if event.keycode == KEY_TAB:
 				_toggle_control_mode()
+			# --- DEBUG-SPRÜNGE (nur im Startraum aktiv) ---
+			# F1 = Boss 1, F2 = Boss 2, F3 = Raum 14 (letzter Raum vor Boss 2)
+			elif event.keycode == KEY_F1:
+				_debug_jump_to(BOSS1_ROOM)
+			elif event.keycode == KEY_F2:
+				_debug_jump_to(BOSS2_ROOM)
+			#elif event.keycode == KEY_F3:
+			#	_debug_jump_to(14)
+
+func _debug_jump_to(room_num: int) -> void:
+	hint_label.text = ""
+	control_label.visible = false
+	_load_room(room_num)
 
 func _spawn_player() -> void:
 	player = player_scene.instantiate()
@@ -100,7 +113,7 @@ func _load_room(room_num: int) -> void:
 		room.num_melee_enemies = 0
 		room.num_ranged_enemies = 0
 		room.num_spread_enemies = 0
-		hint_label.text = "TAB = Steuerung wechseln | Nach oben gehen = Start"
+		hint_label.text = "TAB = Steuerung wechseln | Nach oben gehen = Start" # | F1/F2 = Boss 1/2 (Debug)
 		_update_control_label()
 	elif room_num == BOSS1_ROOM:
 		## ===== BOSS 1 =====
