@@ -1,68 +1,50 @@
-# Blockshooter – Patchnotes zum Prototypen für Version 1.0
+# Blockshooter
 
-## Was ist passiert
+A small prototype project built to experiment with different control schemes and simple room-based combat.
+You play as a blue rectangle fighting through a series of rooms filled with enemies, trying to survive and reach the end.
 
-### 1. Versuchszähler (oben rechts)
-- Zeigt "Versuch: X" direkt unter "Raum Y / 15".
-- Zählt **bei ENTER im GAME-OVER-Screen** hoch (manuell bei Restart-Taste).
-- Wird **zurückgesetzt** bei: Sieg, Moduswechsel (TAB im Startraum).
-- Nur pro Session (keine Save-Datei). Technisch: gespeichert auf dem SceneTree
-  per `set_meta`, überlebt damit `reload_current_scene()`.
+The main goal of this project is to compare which control mode feels more fun and responsive.
 
-### 2. Lila Projektile für Fächerschützen (Gegner 3)
-- `projectile.setup()` akzeptiert einen optionalen Farbparameter.
-- Spread-Gegner (und Boss 2) schießen jetzt lila statt orange.
-- `player.gd` funktioniert unverändert, da der neue Parameter optional ist.
+---
 
-### 3. Endscreen mit Modus-Info
-- Sieg: `"Gewonnen nach X Versuch(en) im Modus A/B!"`
-- Tod: `"Du bist in Raum X gefallen (Versuch Y, Modus A/B)"`
+## Features
 
-### 4. 15 Räume, 2 Bosse
-- Boss 1: Raum 10 (wie bisher – Charge-Attacke).
-- Räume 11–14: neue Schwierigkeitskurve (steigende Wellen mit Fächerschützen).
-- Boss 2: Raum 15 = Boss 1 **plus** 5-Projektil-Fächerschuss alle ~1.6s, 45 HP,
-  dunkel-lila visuell unterscheidbar. Schießt während des Charges NICHT
-  (verhindert unfaire Situationen).
+* Movement with WASD
+* Two control modes:
 
-### 5. Anti-Glitch (Gegner ineinander)
-Zwei Mechanismen kombiniert:
-- **Separation-Steering im `_physics_process`**: jeder Gegner bekommt einen
-  sanften Abstoßungsvektor von Nachbarn im Radius 44px. Löst das Problem,
-  dass Gegner, die alle zum Spieler wollen, sich ineinander drücken.
-- **Spawn-Abstand**: neue Gegner spawnen nur, wenn sie ≥56px von jedem
-  bereits existierenden Gegner entfernt sind (plus ≥150px vom Spieler).
-  Verhindert initiales Überlappen.
+  * **Mode A (Default):** Auto-shoot while standing still (targets nearest enemy)
+  * **Mode B (Alternative):** Manual aiming and shooting with mouse (can shoot while moving)
+* 15 connected rooms with increasing difficulty
+* 2 boss fights
+* Enemy types:
 
-Während des Boss-Charges ist Separation deaktiviert, damit der Charge
-nicht verzerrt wird.
+  * Melee (red)
+  * Ranged (orange)
+  * Spread shooters (purple)
+* HP system (5 lives) with invincibility frames after taking damage
+* Attempt counter per session
+* Room progression system (advance after clearing enemies)
+* Game over and win screens
+* Basic game feel elements (hit flash, screen shake, particles)
 
-### 6. Death- und Hit-Partikel (Bonus)
-- Gegner-Tod: 9 kleine Quadrate in Gegnerfarbe fliegen auseinander,
-  faden aus (Boss: 14 Partikel, größer).
-- Projektil-Treffer: 5 kleine Quadrate in Projektilfarbe spritzen.
-- Alles mit `ColorRect` + `Tween`, keine externen Assets nötig.
+---
 
-### 7. Desktop-Icon (`icon.svg`)
-Blockshooter-Motiv: blauer Spieler-Block in der Mitte, rote/orange/lila
-Gegnerblöcke in den Ecken, ein paar Projektile, passendes Grid. In Godot
-einstellen via:
+## Version 1.0 – Changes
 
-	Project Settings → Application → Config → Icon → res://icon.svg
+* Added **attempt counter** (resets on win or mode switch)
+* Added **purple projectiles** for spread enemies and Boss 2
+* Improved **end screen** with attempt count and mode display
+* Expanded to **15 rooms with 2 bosses**
 
-Für exportierte EXE: Export-Preset → Resources → Icon ebenfalls auf
-`res://icon.svg` setzen (Godot rendert es automatisch in die passenden
-Plattformgrößen).
+  * Boss 1 (Room 10): charge attack
+  * Boss 2 (Room 15): enhanced version with spread shots
+* Implemented **anti-overlap system** for enemies (separation + spawn distance)
+* Added **death and hit particles** (no external assets)
+* Added **custom game icon (icon.svg)**
 
-### Features
-- Spieler bewegt sich mit WASD
-- Schießt automatisch nur wenn stillstehend (Kern-Mechanik)
-- Zielt auf nächsten Gegner
-- Nahkämpfer (rot) und Fernkämpfer (orange)
-- Raumkette (10 Räume, letzter = Boss)
-- Raumwechsel nach oben durch offene Tür
-- HP-System mit 5 Leben und I-Frames nach Treffer
-- Game Feel: Hit-Flash, Screen-Shake, Blink bei I-Frames
-- Game Over + Win Screen + Neustart
-- Schwierigkeits-Skalierung über Räume
+---
 
+## Notes
+
+This is a prototype and not a fully polished game.
+You may encounter bugs or unexpected behavior.
