@@ -27,16 +27,23 @@ const SPREAD_PROJECTILE_COLOR: Color = Color(0.75, 0.4, 0.95)
 ## ----- Boss-Charge -----
 var is_boss: bool = false
 var is_boss2: bool = false   ## Boss 2 = Boss 1 + Fächerschuss + mehr HP
-var charge_cooldown: float = 2.0
-var charge_timer: float = 2.5	## Startet mit erstem Charge
-var charge_speed_multiplier: float = 10.0
-var charge_duration: float = 0.53
+var charge_cooldown: float = 1.5
+var charge_timer: float = 2.0	## Startet mit erstem Charge
+var charge_speed_multiplier: float = 11.0
+var charge_duration: float = 0.55
 var is_charging: bool = false
 var charge_time_left: float = 0.0
 var charge_direction: Vector2 = Vector2.ZERO
 
+## Charge-Telegraph (Anzeige vor dem Charge): Boss bleibt stehen und
+## schrumpft leicht. Gibt dem Spieler Zeit zu reagieren.
+const CHARGE_TELEGRAPH_DURATION: float = 0.28
+const CHARGE_TELEGRAPH_MIN_SCALE: float = 0.75
+var is_telegraphing: bool = false
+var telegraph_time_left: float = 0.0
+
 ## Boss-2 Fächerschuss
-var boss2_fan_cooldown: float = 2
+var boss2_fan_cooldown: float = 1.6
 var boss2_fan_timer: float = 1.2
 
 ## ----- Spawn-Delay -----
@@ -163,7 +170,7 @@ func _handle_timers(delta: float) -> void:
 		shoot_timer -= delta
 	if hit_flash_timer > 0.0:
 		hit_flash_timer -= delta
-	if is_boss and not is_charging:
+	if is_boss and not is_charging and not is_telegraphing:
 		charge_timer -= delta
 	if is_boss2 and boss2_fan_timer > 0.0:
 		boss2_fan_timer -= delta
@@ -185,8 +192,8 @@ func _handle_behavior(delta: float) -> void:
 				_behavior_ranged(direction, distance, 3)
 	
 	# Separation-Steering: verhindert, dass Gegner ineinander glitchen.
-	# Während Boss-Charge überspringen, damit der Charge nicht verzerrt wird.
-	if not is_charging:
+	# Während Charge oder Telegraph überspringen, damit nichts verzerrt wird.
+	if not is_charging and not is_telegraphing:
 		velocity += _compute_separation() * SEPARATION_STRENGTH
 	
 	move_and_slide()
@@ -215,16 +222,33 @@ func _behavior_boss(direction: Vector2, _distance: float, delta: float) -> void:
 			is_charging = false
 			charge_timer = charge_cooldown
 			velocity = Vector2.ZERO
+	elif is_telegraphing:
+		# Anzeige vor dem Charge: stehen bleiben, leicht schrumpfen.
+		velocity = Vector2.ZERO
+		telegraph_time_left -= delta
+		var t: float = 1.0 - clamp(telegraph_time_left / CHARGE_TELEGRAPH_DURATION, 0.0, 1.0)
+		# Linear von 1.0 auf CHARGE_TELEGRAPH_MIN_SCALE
+		var s: float = lerp(1.0, CHARGE_TELEGRAPH_MIN_SCALE, t)
+		scale = Vector2(s, s)
+		if telegraph_time_left <= 0.0:
+			# Charge starten: sprunghaft zurück auf volle Größe
+			is_telegraphing = false
+			scale = Vector2.ONE
+			is_charging = true
+			# Richtung JETZT zur aktuellen Spielerposition nehmen
+			charge_direction = (player_ref.global_position - global_position).normalized()
+			charge_time_left = charge_duration
+			hit_flash_timer = 0.1
 	elif charge_timer <= 0.0:
-		is_charging = true
-		charge_direction = direction
-		charge_time_left = charge_duration
-		hit_flash_timer = 0.15
+		# Telegraph beginnen statt sofort zu chargen
+		is_telegraphing = true
+		telegraph_time_left = CHARGE_TELEGRAPH_DURATION
+		velocity = Vector2.ZERO
 	else:
 		velocity = direction * move_speed
 	
-	# Boss 2: zusätzlich regelmäßig Fächerschüsse (außer während Charge)
-	if is_boss2 and not is_charging and boss2_fan_timer <= 0.0:
+	# Boss 2: zusätzlich regelmäßig Fächerschüsse (außer während Charge oder Telegraph)
+	if is_boss2 and not is_charging and not is_telegraphing and boss2_fan_timer <= 0.0:
 		_shoot_fan(5)
 		boss2_fan_timer = boss2_fan_cooldown
 

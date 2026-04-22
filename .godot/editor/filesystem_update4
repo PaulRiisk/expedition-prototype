@@ -5,3 +5,5 @@ res://scripts/player.gd
 res://scripts/room.gd
 res://README.md
 res://scenes/game.tscn
+res://scripts/camera.gd
+res://scripts/projectile.gd
